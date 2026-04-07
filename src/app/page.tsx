@@ -16,11 +16,8 @@ const BOT_PROFILES: Profile[] = [
   { id: "thing2", display_name: "thing 2", color: "#38bdf8", created_at: "" },
   { id: "meursault", display_name: "meursault", color: "#c4a882", created_at: "" },
   { id: "godot", display_name: "godot", color: "#888888", created_at: "" },
-  { id: "ishmael", display_name: "ishmael", color: "#1e6091", created_at: "" },
   { id: "bartleby", display_name: "bartleby", color: "#6b7280", created_at: "" },
-  { id: "hamlet", display_name: "hamlet", color: "#1e1b4b", created_at: "" },
   { id: "eeyore", display_name: "eeyore", color: "#7c8dab", created_at: "" },
-  { id: "daria", display_name: "daria", color: "#92400e", created_at: "" },
 ];
 
 const BOT_IDS = new Set(BOT_PROFILES.map((p) => p.id));
@@ -74,18 +71,14 @@ export default function HomePage() {
   // Morse toggles for bot characters
   const meursaultOn = useMorseToggle("today mother died", 500);
   const godotOn = useMorseToggle("nothing to be done", 600);
-  const ishmaelOn = useMorseToggle("call me ishmael", 550);
 
   const botStates: Record<string, boolean> = {
     thing1: true,
     thing2: false,
     meursault: meursaultOn,
     godot: godotOn,
-    ishmael: ishmaelOn,
     bartleby: false,
-    hamlet: true,
     eeyore: true,
-    daria: false,
   };
 
   // Check auth session on load
@@ -183,7 +176,7 @@ export default function HomePage() {
       }
       return f;
     });
-  }, [realFriends, friendIds, meursaultOn, godotOn, ishmaelOn]);
+  }, [realFriends, friendIds, meursaultOn, godotOn]);
 
   // Add/remove friend — instant, no approval
   async function handleToggleFriend(id: string) {
