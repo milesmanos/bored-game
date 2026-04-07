@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { hslToHex, hexToPickerPos } from "@/lib/color";
+import { InstallModal, detectPlatform, isStandalone } from "@/components/install-prompt";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -23,6 +24,8 @@ export function SettingsModal({
 }: SettingsModalProps) {
   const [name, setName] = useState(currentName);
   const [saving, setSaving] = useState(false);
+  const [installModalOpen, setInstallModalOpen] = useState(false);
+  const [showInstallButton, setShowInstallButton] = useState(false);
   // Toggle preview is always-on (bored state)
   const [dragging, setDragging] = useState(false);
   const [pickerPos, setPickerPos] = useState<{ x: number; y: number } | null>(() => {
@@ -106,6 +109,14 @@ export function SettingsModal({
     frame = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(frame);
   }, [isOpen]);
+
+  // Show "add to home screen" button on mobile when not already installed
+  useEffect(() => {
+    const platform = detectPlatform();
+    if (platform && !isStandalone()) {
+      setShowInstallButton(true);
+    }
+  }, []);
 
   // Reposition settled emojis on resize
   useEffect(() => {
@@ -451,6 +462,28 @@ export function SettingsModal({
         >
           give feedback
         </button>
+        {showInstallButton && (
+          <button
+            className="btn-outline-hover"
+            onClick={() => setInstallModalOpen(true)}
+            style={{
+              padding: "14px 16px",
+              borderRadius: 12,
+              border: "1px solid rgba(0, 0, 0, 0.08)",
+              background: "rgba(224, 224, 224, 0.5)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              boxShadow: "0 2px 12px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04)",
+              color: "#888",
+              fontSize: 14,
+              fontFamily: "inherit",
+              cursor: "pointer",
+              width: "100%",
+            }}
+          >
+            add to home screen
+          </button>
+        )}
         <button
           className="link-hover"
           onClick={handleLogout}
@@ -502,6 +535,12 @@ export function SettingsModal({
           {sf.emoji}
         </span>
       ))}
+      {installModalOpen && (
+        <InstallModal
+          platform={detectPlatform()}
+          onClose={() => setInstallModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

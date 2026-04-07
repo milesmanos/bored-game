@@ -8,8 +8,15 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://bored-game-29qq12xe1-milesmanos-projects.vercel.app"),
   title: "bored game",
   description: "are you bored",
+  manifest: "/manifest.json",
   icons: {
     icon: "/favicon.svg",
+    apple: "/icon-192.png",
+  },
+  appleWebApp: {
+    capable: true,
+    title: "bored game",
+    statusBarStyle: "default",
   },
   openGraph: {
     title: "bored game",

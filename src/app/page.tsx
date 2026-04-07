@@ -10,6 +10,7 @@ import { useMorseToggle } from "@/hooks/use-morse-toggle";
 import { useFriendBoredoms, useMyBoredom } from "@/hooks/use-boredom";
 import { useFriendNotifications } from "@/hooks/use-friend-notifications";
 import { FriendToasts } from "@/components/friend-toasts";
+import { InstallPrompt } from "@/components/install-prompt";
 import { BOT_PROFILES, BOT_IDS } from "@/lib/supabase";
 import type { FriendBoredom, Profile, BoredBoardEntry } from "@/lib/supabase";
 const SIDE_WIDTH = 130;
@@ -695,6 +696,9 @@ export default function HomePage() {
 
       {/* Friend toasts */}
       <FriendToasts notifications={friendNotifs} onDismiss={dismissNotif} />
+
+      {/* Install PWA prompt for mobile users */}
+      <InstallPrompt />
 
       {/* Bottom toolbar area */}
       <div
