@@ -23,7 +23,7 @@ export function SettingsModal({
 }: SettingsModalProps) {
   const [name, setName] = useState(currentName);
   const [saving, setSaving] = useState(false);
-  const [previewBored, setPreviewBored] = useState(true);
+  // Toggle preview is always-on (bored state)
   const [dragging, setDragging] = useState(false);
   const [pickerPos, setPickerPos] = useState<{ x: number; y: number } | null>(() => {
     return hexToPickerPos(currentColor);
@@ -255,9 +255,9 @@ export function SettingsModal({
         settings
       </h1>
 
-      {/* Bouncing toggle preview */}
+      {/* Bouncing toggle preview — matches screensaver bubble exactly */}
       <div
-        onClick={() => setPreviewBored((b) => !b)}
+        onClick={() => {}}
         style={{
           position: "fixed",
           left: togglePos.x,
@@ -265,17 +265,13 @@ export function SettingsModal({
           width: 140,
           height: 56,
           borderRadius: 28,
-          background: previewBored
-            ? `${currentColor}cc`
-            : "rgba(200, 200, 200, 0.6)",
+          background: `${currentColor}cc`,
           backdropFilter: "blur(12px)",
           WebkitBackdropFilter: "blur(12px)",
-          border: `1px solid ${previewBored ? `${currentColor}88` : "rgba(0, 0, 0, 0.08)"}`,
+          border: `1px solid ${currentColor}88`,
           transition: "background 0.3s ease, border 0.3s ease, box-shadow 0.3s ease",
-          boxShadow: previewBored
-            ? `0 4px 24px ${currentColor}33, 0 1px 4px rgba(0, 0, 0, 0.08)`
-            : "0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04)",
-          cursor: "pointer",
+          boxShadow: `0 4px 24px ${currentColor}33, 0 1px 4px rgba(0, 0, 0, 0.08)`,
+          cursor: "default",
           userSelect: "none",
           display: "flex",
           alignItems: "center",
@@ -286,17 +282,16 @@ export function SettingsModal({
         <span
           style={{
             position: "absolute",
-            left: previewBored ? 8 : 50,
-            right: previewBored ? 50 : 8,
+            left: 8,
+            right: 50,
             textAlign: "center",
             fontSize: 11,
             fontWeight: 700,
-            color: previewBored ? "#fff" : "#999",
+            color: "#fff",
             lineHeight: 1.2,
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
-            transition: "left 0.3s ease, right 0.3s ease, color 0.3s ease",
           }}
         >
           {name.trim() || currentName}
@@ -306,11 +301,9 @@ export function SettingsModal({
             width: 44,
             height: 44,
             borderRadius: "50%",
-            background: previewBored ? "#fff" : "#aaa",
-            transition: "transform 0.3s ease, background 0.3s ease",
-            transform: previewBored
-              ? "translateX(78px)"
-              : "translateX(0)",
+            background: "#fff",
+            transition: "transform 0.3s ease",
+            transform: "translateX(84px)",
             flexShrink: 0,
           }}
         />

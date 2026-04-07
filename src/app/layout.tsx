@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
+import { Chewy } from "next/font/google";
 import "./globals.css";
 
+const chewy = Chewy({ weight: "400", subsets: ["latin"] });
+
 export const metadata: Metadata = {
+  metadataBase: new URL("https://bored-game-29qq12xe1-milesmanos-projects.vercel.app"),
   title: "bored game",
   description: "are you bored",
   icons: {
@@ -29,12 +33,8 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Chewy&display=swap"
-          rel="stylesheet"
-        />
       </head>
-      <body>{children}</body>
+      <body className={chewy.className}>{children}</body>
     </html>
   );
 }

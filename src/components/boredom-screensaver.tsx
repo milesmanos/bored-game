@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import type { FriendBoredom } from "@/lib/supabase";
 
 interface FloatingBubble {
@@ -27,10 +27,34 @@ const BASE_SPEED = 0.8;
 const TURBO_SPEED = 5;
 const NORMAL_MASS = 1;
 const TURBO_MASS = 15;
-const TOGGLE_WIDTH = 140;
-const TOGGLE_HEIGHT = 56;
-const KNOB_SIZE = 44;
-const KNOB_PADDING = 6;
+const MOBILE_BREAKPOINT = 480;
+
+// Desktop dimensions
+const DESKTOP_TOGGLE_WIDTH = 140;
+const DESKTOP_TOGGLE_HEIGHT = 56;
+const DESKTOP_KNOB_SIZE = 44;
+const DESKTOP_KNOB_PADDING = 6;
+
+// Mobile dimensions — same proportions as toolbar toggle (60:34 ≈ 1.76:1)
+const MOBILE_TOGGLE_WIDTH = 70;
+const MOBILE_TOGGLE_HEIGHT = 40;
+const MOBILE_KNOB_SIZE = 32;
+const MOBILE_KNOB_PADDING = 4;
+
+function useDimensions() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= MOBILE_BREAKPOINT);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  return isMobile
+    ? { toggleWidth: MOBILE_TOGGLE_WIDTH, toggleHeight: MOBILE_TOGGLE_HEIGHT, knobSize: MOBILE_KNOB_SIZE, knobPadding: MOBILE_KNOB_PADDING, isMobile: true }
+    : { toggleWidth: DESKTOP_TOGGLE_WIDTH, toggleHeight: DESKTOP_TOGGLE_HEIGHT, knobSize: DESKTOP_KNOB_SIZE, knobPadding: DESKTOP_KNOB_PADDING, isMobile: false };
+}
 
 export function BoredomScreensaver({
   friends,
@@ -43,9 +67,13 @@ export function BoredomScreensaver({
   const bubblesRef = useRef<FloatingBubble[]>([]);
   const animFrameRef = useRef<number>(0);
   const [renderTick, setRenderTick] = useState(0);
+  const dims = useDimensions();
+  const dimsRef = useRef(dims);
+  dimsRef.current = dims;
 
   // Build bubble list from friends + self
   useEffect(() => {
+    const { toggleWidth, toggleHeight } = dimsRef.current;
     const allPeople: FloatingBubble[] = [];
 
     // Add self
@@ -57,8 +85,8 @@ export function BoredomScreensaver({
         color: myColor || "#FF6B6B",
         isBored: myBored || false,
         turbo: myTurbo || false,
-        x: existing?.x ?? Math.random() * (window.innerWidth - TOGGLE_WIDTH),
-        y: existing?.y ?? Math.random() * (window.innerHeight - TOGGLE_HEIGHT),
+        x: existing?.x ?? Math.random() * (window.innerWidth - toggleWidth),
+        y: existing?.y ?? Math.random() * (window.innerHeight - toggleHeight),
         vx: existing?.vx ?? (Math.random() - 0.5) * 2,
         vy: existing?.vy ?? (Math.random() - 0.5) * 2,
       });
@@ -80,8 +108,8 @@ export function BoredomScreensaver({
         color: f.profile.color,
         isBored,
         turbo: f.toggle?.turbo || false,
-        x: existing?.x ?? Math.random() * (window.innerWidth - TOGGLE_WIDTH),
-        y: existing?.y ?? Math.random() * (window.innerHeight - TOGGLE_HEIGHT),
+        x: existing?.x ?? Math.random() * (window.innerWidth - toggleWidth),
+        y: existing?.y ?? Math.random() * (window.innerHeight - toggleHeight),
         vx: existing?.vx ?? (Math.random() - 0.5) * 2,
         vy: existing?.vy ?? (Math.random() - 0.5) * 2,
       });
@@ -97,6 +125,7 @@ export function BoredomScreensaver({
       if (!container) return;
 
       const { width, height } = container.getBoundingClientRect();
+      const { toggleWidth, toggleHeight } = dimsRef.current;
 
       const bubbles = bubblesRef.current;
 
@@ -113,39 +142,30 @@ export function BoredomScreensaver({
         bubble.y += bubble.vy;
 
         // Bounce off walls
-        if (bubble.x <= 0 || bubble.x >= width - TOGGLE_WIDTH) {
+        if (bubble.x <= 0 || bubble.x >= width - toggleWidth) {
           bubble.vx *= -1;
-          bubble.x = Math.max(0, Math.min(width - TOGGLE_WIDTH, bubble.x));
+          bubble.x = Math.max(0, Math.min(width - toggleWidth, bubble.x));
         }
-        if (bubble.y <= 0 || bubble.y >= height - TOGGLE_HEIGHT) {
+        if (bubble.y <= 0 || bubble.y >= height - toggleHeight) {
           bubble.vy *= -1;
-          bubble.y = Math.max(0, Math.min(height - TOGGLE_HEIGHT, bubble.y));
+          bubble.y = Math.max(0, Math.min(height - toggleHeight, bubble.y));
         }
       }
 
       // Bounce off each other — capsule (pill) collision
-      // Each pill = a horizontal line segment + radius R.
-      // Find closest points between the two segments,
-      // then do standard billiard-ball elastic collision at that contact.
-      const R = TOGGLE_HEIGHT / 2;
-      const HALF_INNER = (TOGGLE_WIDTH - TOGGLE_HEIGHT) / 2;
+      const R = toggleHeight / 2;
+      const HALF_INNER = (toggleWidth - toggleHeight) / 2;
 
       for (let i = 0; i < bubbles.length; i++) {
         for (let j = i + 1; j < bubbles.length; j++) {
           const a = bubbles[i];
           const b = bubbles[j];
 
-          // Center of each pill
-          const acx = a.x + TOGGLE_WIDTH / 2;
+          const acx = a.x + toggleWidth / 2;
           const acy = a.y + R;
-          const bcx = b.x + TOGGLE_WIDTH / 2;
+          const bcx = b.x + toggleWidth / 2;
           const bcy = b.y + R;
 
-          // Closest points on each pill's inner segment to the other.
-          // Segments are horizontal, so only X varies.
-          // Segment A: x in [acx - HALF_INNER, acx + HALF_INNER], y = acy
-          // Segment B: x in [bcx - HALF_INNER, bcx + HALF_INNER], y = bcy
-          // Closest pair: clamp each segment's x toward the other's closest x.
           const clampAx = Math.max(acx - HALF_INNER, Math.min(acx + HALF_INNER, bcx));
           const clampBx = Math.max(bcx - HALF_INNER, Math.min(bcx + HALF_INNER, clampAx));
 
@@ -155,12 +175,9 @@ export function BoredomScreensaver({
           const minDist = 2 * R;
 
           if (dist < minDist && dist > 0.01) {
-            // Collision normal: from closest point on A to closest point on B
             const nx = dx / dist;
             const ny = dy / dist;
 
-            // Elastic collision with unequal masses.
-            // Turbo toggles have more mass → harder to deflect.
             const m1 = a.turbo ? TURBO_MASS : NORMAL_MASS;
             const m2 = b.turbo ? TURBO_MASS : NORMAL_MASS;
 
@@ -168,7 +185,6 @@ export function BoredomScreensaver({
             const dvy = a.vy - b.vy;
             const dvDotN = dvx * nx + dvy * ny;
 
-            // Only resolve if approaching
             if (dvDotN > 0) {
               const j1 = (2 * m2 / (m1 + m2)) * dvDotN;
               const j2 = (2 * m1 / (m1 + m2)) * dvDotN;
@@ -178,7 +194,6 @@ export function BoredomScreensaver({
               b.vy += j2 * ny;
             }
 
-            // Separate so they don't overlap
             const overlap = minDist - dist;
             a.x -= (overlap / 2 + 0.5) * nx;
             a.y -= (overlap / 2 + 0.5) * ny;
@@ -195,6 +210,8 @@ export function BoredomScreensaver({
     animFrameRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animFrameRef.current);
   }, []);
+
+  const { toggleWidth, toggleHeight, knobSize, knobPadding, isMobile } = dims;
 
   return (
     <div
@@ -215,60 +232,93 @@ export function BoredomScreensaver({
             position: "absolute",
             left: bubble.x,
             top: bubble.y,
-            width: TOGGLE_WIDTH,
-            height: TOGGLE_HEIGHT,
-            borderRadius: TOGGLE_HEIGHT / 2,
-            background: bubble.isBored
-              ? `${bubble.color}cc`
-              : "rgba(200, 200, 200, 0.6)",
-            backdropFilter: "blur(12px)",
-            WebkitBackdropFilter: "blur(12px)",
-            border: `1px solid ${bubble.isBored ? `${bubble.color}88` : "rgba(0, 0, 0, 0.08)"}`,
-            transition: "background 0.3s ease",
-            boxShadow: bubble.isBored
-              ? `0 4px 24px ${bubble.color}33, 0 1px 4px rgba(0, 0, 0, 0.08)`
-              : "0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04)",
-            cursor: "default",
-            userSelect: "none",
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
-            padding: KNOB_PADDING,
+            gap: isMobile ? 3 : 0,
           }}
         >
-          {/* Name label */}
-          <span
-            style={{
-              position: "absolute",
-              left: bubble.isBored ? KNOB_PADDING + 2 : KNOB_SIZE + KNOB_PADDING + 4,
-              right: bubble.isBored ? KNOB_SIZE + KNOB_PADDING + 4 : KNOB_PADDING + 2,
-              textAlign: "center",
-              fontSize: 11,
-              fontWeight: 700,
-              color: bubble.isBored ? "#fff" : "#999",
-              lineHeight: 1.2,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              transition: "left 0.3s ease, right 0.3s ease",
-            }}
-          >
-            {bubble.name}
-          </span>
-
-          {/* Knob */}
+          {/* Toggle pill */}
           <div
             style={{
-              width: KNOB_SIZE,
-              height: KNOB_SIZE,
-              borderRadius: "50%",
-              background: bubble.isBored ? "#fff" : "#aaa",
-              transition: "transform 0.3s ease, background 0.3s ease",
-              transform: bubble.isBored
-                ? `translateX(${TOGGLE_WIDTH - KNOB_SIZE - KNOB_PADDING * 2 - 4}px)`
-                : "translateX(0)",
-              flexShrink: 0,
+              width: toggleWidth,
+              height: toggleHeight,
+              borderRadius: toggleHeight / 2,
+              background: bubble.isBored
+                ? `${bubble.color}cc`
+                : "rgba(200, 200, 200, 0.6)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              border: `1px solid ${bubble.isBored ? `${bubble.color}88` : "rgba(0, 0, 0, 0.08)"}`,
+              transition: "background 0.3s ease",
+              boxShadow: bubble.isBored
+                ? `0 4px 24px ${bubble.color}33, 0 1px 4px rgba(0, 0, 0, 0.08)`
+                : "0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04)",
+              cursor: "default",
+              userSelect: "none",
+              display: "flex",
+              alignItems: "center",
+              padding: knobPadding,
+              position: "relative",
             }}
-          />
+          >
+            {/* Name label inside toggle (desktop only) */}
+            {!isMobile && (
+              <span
+                style={{
+                  position: "absolute",
+                  left: bubble.isBored ? knobPadding + 2 : knobSize + knobPadding + 4,
+                  right: bubble.isBored ? knobSize + knobPadding + 4 : knobPadding + 2,
+                  textAlign: "center",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: bubble.isBored ? "#fff" : "#999",
+                  lineHeight: 1.2,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  transition: "left 0.3s ease, right 0.3s ease",
+                }}
+              >
+                {bubble.name}
+              </span>
+            )}
+
+            {/* Knob */}
+            <div
+              style={{
+                width: knobSize,
+                height: knobSize,
+                borderRadius: "50%",
+                background: bubble.isBored ? "#fff" : "#aaa",
+                transition: "transform 0.3s ease, background 0.3s ease",
+                transform: bubble.isBored
+                  ? `translateX(${toggleWidth - knobSize - knobPadding * 2}px)`
+                  : "translateX(0)",
+                flexShrink: 0,
+              }}
+            />
+          </div>
+
+          {/* Name label below toggle (mobile only) */}
+          {isMobile && (
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                color: bubble.isBored ? bubble.color : "#aaa",
+                textAlign: "center",
+                maxWidth: toggleWidth + 20,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                userSelect: "none",
+                transition: "color 0.3s ease",
+              }}
+            >
+              {bubble.name}
+            </span>
+          )}
         </div>
       ))}
     </div>

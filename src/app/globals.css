@@ -7,7 +7,7 @@
 html,
 body {
   height: 100%;
-  font-family: "Chewy", cursive;
+  /* font-family set via next/font className on body */
   background: #e0e0e0;
   color: #555;
   -webkit-font-smoothing: antialiased;

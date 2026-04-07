@@ -63,6 +63,7 @@ export default function HomePage() {
   const [registryTab, setRegistryTab] = useState<"registry" | "leaderbored">("registry");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [leaderboard, setLeaderboard] = useState<BoredBoardEntry[]>([]);
+  const [toggling, setToggling] = useState(false);
 
   // Anchor for time-based boredom counting (avoids setInterval drift)
   const anchorCountRef = useRef(0);
@@ -123,12 +124,12 @@ export default function HomePage() {
     return () => subscription.unsubscribe();
   }, [router]);
 
-  // Sync boredom count to DB (fire-and-forget)
+  // Sync boredom count to DB
   const syncBoredomCount = useCallback(async (count?: number) => {
     if (!userId) return;
-    const val = count ?? boredoms;
+    const val = count ?? boredomsRef.current;
     await supabase.rpc("sync_boredom_count", { count: val });
-  }, [userId, boredoms]);
+  }, [userId]);
 
   // Fetch leaderboard — sync our count first so the board is up to date
   const refreshLeaderboard = useCallback(async (period: string = "weekly") => {
@@ -196,7 +197,7 @@ export default function HomePage() {
           anchorTimeRef.current = now;
 
           // Sync the resumed count back to DB so it's current
-          supabase.rpc("sync_boredom_count", { count: resumedCount });
+          void supabase.rpc("sync_boredom_count", { count: resumedCount });
         });
     } else if (!myBoredom.loading) {
       setBoredoms(storedCount);
@@ -212,7 +213,7 @@ export default function HomePage() {
   useEffect(() => {
     function handleUnload() {
       if (!userId) return;
-      supabase.rpc("sync_boredom_count", { count: boredomsRef.current });
+      void supabase.rpc("sync_boredom_count", { count: boredomsRef.current });
     }
     function handleVisibility() {
       if (document.visibilityState === "hidden") handleUnload();
@@ -349,12 +350,18 @@ export default function HomePage() {
 
   // Toggle boredom via Supabase RPC
   async function handleToggleBoredom() {
-    // Sync count when turning boredom off — await to ensure it's saved
-    if (myBoredom.isBored) {
-      await syncBoredomCount();
+    if (toggling) return;
+    setToggling(true);
+    try {
+      // Sync count when turning boredom off — await to ensure it's saved
+      if (myBoredom.isBored) {
+        await syncBoredomCount();
+      }
+      clearTurbo();
+      await myBoredom.toggleBoredom();
+    } finally {
+      setToggling(false);
     }
-    clearTurbo();
-    await myBoredom.toggleBoredom();
   }
 
   async function handleActivateTurbo() {
@@ -380,7 +387,7 @@ export default function HomePage() {
   useEffect(() => {
     if (!myBoredom.loading && !myBoredom.isBored && userId && !autoBored.current) {
       autoBored.current = true;
-      myBoredom.toggleBoredom();
+      myBoredom.toggleBoredom().catch(() => {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [myBoredom.loading, userId]);
@@ -520,10 +527,22 @@ export default function HomePage() {
             fontWeight: 400,
             color: "#c8c8c8",
             lineHeight: 1,
-            fontVariantNumeric: "tabular-nums",
+            display: "flex",
+            justifyContent: "center",
           }}
         >
-          {boredoms.toLocaleString()}
+          {boredoms.toLocaleString().split("").map((ch, i) => (
+            <span
+              key={i}
+              style={{
+                display: "inline-block",
+                textAlign: "center",
+                width: ch === "," ? "0.35em" : "0.62em",
+              }}
+            >
+              {ch}
+            </span>
+          ))}
         </div>
         <div style={{ fontSize: "3vw", color: "#ccc", marginTop: 8 }}>
           boredoms
@@ -754,7 +773,9 @@ export default function HomePage() {
               display: "flex",
               alignItems: "center",
               gap: 8,
-              cursor: "pointer",
+              cursor: toggling ? "not-allowed" : "pointer",
+              opacity: toggling ? 0.6 : 1,
+              transition: "opacity 0.2s ease",
             }}
           >
             <span
