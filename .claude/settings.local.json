@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(export NVM_DIR=\"$HOME/.nvm\")",
+      "Bash(. \"$NVM_DIR/nvm.sh\")",
+      "Bash(ln -sf /Users/milesmanos/.nvm/versions/node/v25.8.0/bin/node /usr/local/bin/node)",
+      "Bash(ln -sf /Users/milesmanos/.nvm/versions/node/v25.8.0/bin/npm /usr/local/bin/npm)",
+      "Bash(ln -sf /Users/milesmanos/.nvm/versions/node/v25.8.0/bin/npx /usr/local/bin/npx)",
+      "Read(//Users/milesmanos/.nvm/versions/node/v25.8.0/bin/**)",
+      "Bash(/usr/local/bin/node --version)"
+    ]
+  }
+}

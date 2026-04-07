@@ -1,0 +1,69 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  font-family: "Chewy", cursive;
+  background: #e0e0e0;
+  color: #666;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Hover states — desktop only */
+@media (hover: hover) {
+  .link-hover:hover {
+    color: #555 !important;
+  }
+  .btn-dark-hover:hover {
+    background: #333 !important;
+  }
+  .btn-outline-hover:hover {
+    background: rgba(0, 0, 0, 0.05) !important;
+  }
+  .btn-hover:hover {
+    opacity: 0.85 !important;
+  }
+  .close-hover:hover {
+    color: #555 !important;
+  }
+}
+
+/* Feedback float animation */
+@keyframes float-up-fade {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-60vh);
+  }
+}
+
+/* Mobile layout */
+@media (max-width: 480px) {
+  .bottom-toolbar-area {
+    flex-wrap: wrap !important;
+    width: calc(100% - 32px) !important;
+    bottom: 16px !important;
+    gap: 8px !important;
+    justify-content: space-between !important;
+  }
+  .toolbar-pill {
+    order: 1 !important;
+    width: 100% !important;
+    justify-content: center !important;
+  }
+  .turbo-btn,
+  .countdown-area {
+    order: 0 !important;
+    width: auto !important;
+  }
+  .counter-number {
+    font-size: 32px !important;
+  }
+}
