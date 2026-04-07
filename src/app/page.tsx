@@ -321,7 +321,7 @@ export default function HomePage() {
       if (isBot) {
         // Track bot removal in localStorage so it persists across reloads
         removedBotsRef.current.add(id);
-        localStorage.setItem("removed-bots", JSON.stringify([...removedBotsRef.current]));
+        localStorage.setItem("removed-bots", JSON.stringify(Array.from(removedBotsRef.current)));
       } else {
         await supabase
           .from("friendships")
@@ -336,7 +336,7 @@ export default function HomePage() {
       if (isBot) {
         // Un-track bot removal
         removedBotsRef.current.delete(id);
-        localStorage.setItem("removed-bots", JSON.stringify([...removedBotsRef.current]));
+        localStorage.setItem("removed-bots", JSON.stringify(Array.from(removedBotsRef.current)));
       } else {
         await supabase.from("friendships").insert({
           requester_id: userId,
