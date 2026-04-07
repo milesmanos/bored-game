@@ -3,27 +3,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { hslToHex, hexToPickerPos } from "@/lib/color";
 
-function hslToHex(h: number, s: number, l: number): string {
-  s /= 100;
-  l /= 100;
-  const a = s * Math.min(l, 1 - l);
-  const f = (n: number) => {
-    const k = (n + h / 30) % 12;
-    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-    return Math.round(255 * color)
-      .toString(16)
-      .padStart(2, "0");
-  };
-  return `#${f(0)}${f(8)}${f(4)}`;
-}
-
-function complementaryColor(hex: string): string {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `#${(255 - r).toString(16).padStart(2, "0")}${(255 - g).toString(16).padStart(2, "0")}${(255 - b).toString(16).padStart(2, "0")}`;
-}
 
 export default function SetupPage() {
   const router = useRouter();
@@ -33,6 +14,7 @@ export default function SetupPage() {
   const [displayName, setDisplayName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [pickerPos, setPickerPos] = useState<{ x: number; y: number } | null>(null);
   const gradientRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -54,6 +36,7 @@ export default function SetupPage() {
 
       if (profile?.color) {
         setColor(profile.color);
+        setPickerPos(hexToPickerPos(profile.color));
       }
     });
   }, [router]);
@@ -78,6 +61,7 @@ export default function SetupPage() {
     const hue = x * 360;
     const lightness = 90 - y * 80;
 
+    setPickerPos({ x, y });
     setColor(hslToHex(hue, 80, lightness));
   }, []);
 
@@ -112,7 +96,7 @@ export default function SetupPage() {
       }}
     >
       <div style={{ padding: 24, textAlign: "center" }}>
-        <h1 style={{ fontSize: 36, fontWeight: 400 }}>pick a color</h1>
+        <h1 style={{ fontSize: 36, fontWeight: 400 }}>pick your color</h1>
       </div>
 
       <div
@@ -135,8 +119,26 @@ export default function SetupPage() {
           userSelect: "none",
           WebkitUserSelect: "none",
           touchAction: "none",
+          position: "relative",
         }}
-      />
+      >
+        {pickerPos && (
+          <div
+            style={{
+              position: "absolute",
+              left: `${pickerPos.x * 100}%`,
+              top: `${pickerPos.y * 100}%`,
+              width: 20,
+              height: 20,
+              borderRadius: "50%",
+              border: "2px solid #fff",
+              boxShadow: "0 0 4px rgba(0,0,0,0.4)",
+              transform: "translate(-50%, -50%)",
+              pointerEvents: "none",
+            }}
+          />
+        )}
+      </div>
 
       <div style={{ padding: 16, textAlign: "center" }}>
         <button
@@ -148,7 +150,7 @@ export default function SetupPage() {
             borderRadius: 12,
             border: "none",
             background: color,
-            color: complementaryColor(color),
+            color: "#fff",
             fontSize: 16,
             fontFamily: "inherit",
             cursor: loading ? "not-allowed" : "pointer",
@@ -156,11 +158,11 @@ export default function SetupPage() {
             transition: "background 0.1s ease, color 0.1s ease",
           }}
         >
-          {loading ? "hold on..." : "this is good"}
+          {loading ? "hold on..." : "great, i'm bored already"}
         </button>
 
         {error && (
-          <p style={{ color: "#999", fontSize: 14, marginTop: 12 }}>
+          <p style={{ color: "#888", fontSize: 14, marginTop: 12 }}>
             {error}
           </p>
         )}

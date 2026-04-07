@@ -9,14 +9,15 @@ body {
   height: 100%;
   font-family: "Chewy", cursive;
   background: #e0e0e0;
-  color: #666;
+  color: #555;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Hover states — desktop only */
 @media (hover: hover) {
   .link-hover:hover {
-    color: #555 !important;
+    color: #444 !important;
   }
   .btn-dark-hover:hover {
     background: #333 !important;
@@ -49,7 +50,7 @@ body {
   .bottom-toolbar-area {
     flex-wrap: wrap !important;
     width: calc(100% - 32px) !important;
-    bottom: 16px !important;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
     gap: 8px !important;
     justify-content: space-between !important;
   }

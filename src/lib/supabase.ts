@@ -14,6 +14,7 @@ export interface Profile {
   display_name: string;
   color: string;
   created_at: string;
+  boredom_count: number;
 }
 
 export interface BoredomToggle {
@@ -48,3 +49,15 @@ export interface FriendBoredom {
   profile: Profile;
   toggle: BoredomToggle | null;
 }
+
+// ============================================
+// Bot profiles — always available in registry
+// ============================================
+export const BOT_PROFILES: Profile[] = [
+  { id: "thing1", display_name: "thing 1", color: "#dc5858", created_at: "", boredom_count: 0 },
+  { id: "thing2", display_name: "thing 2", color: "#5bb8d4", created_at: "", boredom_count: 0 },
+  { id: "meursault", display_name: "meursault", color: "#c4a882", created_at: "", boredom_count: 0 },
+  { id: "godot", display_name: "godot", color: "#22c55e", created_at: "", boredom_count: 0 },
+];
+
+export const BOT_IDS = new Set(BOT_PROFILES.map((p) => p.id));

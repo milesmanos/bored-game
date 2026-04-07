@@ -63,7 +63,7 @@ export function useFriendBoredoms(userId: string | null) {
     fetchFriends();
 
     // Subscribe to real-time changes on boredom_toggles
-    const channel = supabase
+    const toggleChannel = supabase
       .channel("boredom-updates")
       .on(
         "postgres_changes",
@@ -80,8 +80,25 @@ export function useFriendBoredoms(userId: string | null) {
       )
       .subscribe();
 
+    // Subscribe to friendship changes so new friends appear immediately
+    const friendChannel = supabase
+      .channel("friendship-updates")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "friendships",
+        },
+        () => {
+          fetchFriends();
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(toggleChannel);
+      supabase.removeChannel(friendChannel);
     };
   }, [fetchFriends]);
 

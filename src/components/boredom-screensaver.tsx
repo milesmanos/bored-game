@@ -24,9 +24,9 @@ interface BoredomScreensaverProps {
 }
 
 const BASE_SPEED = 0.8;
-const TURBO_SPEED = 4;
+const TURBO_SPEED = 5;
 const NORMAL_MASS = 1;
-const TURBO_MASS = 5;
+const TURBO_MASS = 15;
 const TOGGLE_WIDTH = 140;
 const TOGGLE_HEIGHT = 56;
 const KNOB_SIZE = 44;
@@ -219,13 +219,15 @@ export function BoredomScreensaver({
             height: TOGGLE_HEIGHT,
             borderRadius: TOGGLE_HEIGHT / 2,
             background: bubble.isBored
-              ? bubble.color
-              : "#ccc",
-            border: `2px solid ${bubble.isBored ? bubble.color : "#bbb"}`,
+              ? `${bubble.color}cc`
+              : "rgba(200, 200, 200, 0.6)",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            border: `1px solid ${bubble.isBored ? `${bubble.color}88` : "rgba(0, 0, 0, 0.08)"}`,
             transition: "background 0.3s ease",
             boxShadow: bubble.isBored
-              ? `0 0 20px ${bubble.color}66, 0 0 40px ${bubble.color}22`
-              : "none",
+              ? `0 4px 24px ${bubble.color}33, 0 1px 4px rgba(0, 0, 0, 0.08)`
+              : "0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04)",
             cursor: "default",
             userSelect: "none",
             display: "flex",
