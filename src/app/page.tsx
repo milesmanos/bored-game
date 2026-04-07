@@ -64,11 +64,29 @@ export default function HomePage() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [leaderboard, setLeaderboard] = useState<BoredBoardEntry[]>([]);
   const [toggling, setToggling] = useState(false);
+  const [toolbarInset, setToolbarInset] = useState(0);
+  const toolbarRef = useRef<HTMLDivElement>(null);
 
   // Anchor for time-based boredom counting (avoids setInterval drift)
   const anchorCountRef = useRef(0);
   const anchorTimeRef = useRef(Date.now());
   const turboActivatedAtRef = useRef<number | null>(null);
+
+  // Measure toolbar height so screensaver bubbles bounce off its top
+  useEffect(() => {
+    const el = toolbarRef.current;
+    if (!el) return;
+    const measure = () => {
+      const rect = el.getBoundingClientRect();
+      const val = window.innerHeight - rect.top;
+      setToolbarInset((prev) => prev === val ? prev : val);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    window.addEventListener("resize", measure);
+    return () => { ro.disconnect(); window.removeEventListener("resize", measure); };
+  }, [authLoading]);
 
   // Real Supabase hooks
   const myBoredom = useMyBoredom(userId);
@@ -82,17 +100,26 @@ export default function HomePage() {
   const meursaultOn = useMorseToggle("today mother died", 500);
   const godotOn = useMorseToggle("nothing to be done", 600);
 
-  const botStates: Record<string, boolean> = {
+  const botStatesRef = useRef<Record<string, boolean>>({
     thing1: true,
     thing2: true,
     meursault: meursaultOn,
     godot: godotOn,
-  };
+  });
+  botStatesRef.current.meursault = meursaultOn;
+  botStatesRef.current.godot = godotOn;
 
   // Check auth session on load
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) {
+        // Skip auth and render with mock data for preview testing
+        if (process.env.NEXT_PUBLIC_PREVIEW_MODE === "true") {
+          setUserId("preview");
+          setUserProfile({ id: "preview", display_name: "preview", color: "#4A90D9", created_at: "", boredom_count: 0 });
+          setAuthLoading(false);
+          return;
+        }
         router.push("/login");
         return;
       }
@@ -279,9 +306,12 @@ export default function HomePage() {
   }, [userId, removedBotsLoaded]);
 
   // Build screensaver friends list: real Supabase friends + local bot friends
+  // Note: botStatesRef is read at memo time — morse toggle changes don't trigger
+  // a re-render here; the screensaver reads bot states via the ref prop instead.
   const allFriends: FriendBoredom[] = useMemo(() => {
     const combined = [...realFriends];
     const realFriendIds = new Set(realFriends.map((f) => f.profile.id));
+    const botStates = botStatesRef.current;
 
     // Add any bot from friendIds that isn't already a real Supabase friend
     for (const bot of BOT_PROFILES) {
@@ -304,7 +334,7 @@ export default function HomePage() {
       }
       return f;
     });
-  }, [realFriends, friendIds, meursaultOn, godotOn]);
+  }, [realFriends, friendIds]);
 
   // Add/remove friend — instant, no approval
   async function handleToggleFriend(id: string) {
@@ -477,7 +507,7 @@ export default function HomePage() {
       <div
         style={{
           width: "100vw",
-          height: "100vh",
+          height: "100dvh",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -494,13 +524,15 @@ export default function HomePage() {
   const userColor = userProfile?.color || "#888";
 
   return (
-    <div style={{ width: "100vw", height: "100vh", overflow: "hidden" }}>
+    <div style={{ width: "100vw", height: "100dvh", overflow: "hidden" }}>
       <BoredomScreensaver
         friends={allFriends}
         myName={userName}
         myColor={userColor}
         myBored={myBoredom.isBored}
         myTurbo={localTurbo}
+        bottomInset={toolbarInset}
+        botStatesRef={botStatesRef}
       />
 
       {/* Boredom counter — engraved background */}
@@ -739,6 +771,7 @@ export default function HomePage() {
 
         {/* Main toolbar */}
         <div
+          ref={toolbarRef}
           className="toolbar-pill"
           style={{
             background: myBoredom.isBored
